@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SHIFT: COSMIC RUN</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,10 90,90 50,70 10,90' fill='%2300f3ff'/></svg>">
+</head>
+<body>
+  <div id="game-container">
+    <!-- Main Game Canvas -->
+    <canvas id="game-canvas"></canvas>
+
+    <!-- CRT Scanline & Lens Flare Overlay -->
+    <div class="crt-overlay"></div>
+
+    <!-- Dimension Shift / Damage Screen Flash -->
+    <div id="screen-flash"></div>
+
+    <!-- Boss Health Bar -->
+    <div id="boss-bar-container">
+      <div class="boss-name" id="boss-name-text">OMEGA SENTINEL DREADNOUGHT</div>
+      <div class="boss-bar-frame">
+        <div class="boss-bar-fill" id="boss-bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- In-Game Heads-Up Display (HUD) -->
+    <div id="hud">
+      <!-- Top HUD -->
+      <div class="hud-top">
+        <div class="hud-left">
+          <div class="hud-bar-container">
+            <span class="hud-bar-label label-shield">SHIELD</span>
+            <div class="hud-bar-frame">
+              <div class="hud-bar-fill fill-shield" id="fill-shield"></div>
+            </div>
+          </div>
+          <div class="hud-bar-container">
+            <span class="hud-bar-label label-hull">HULL</span>
+            <div class="hud-bar-frame">
+              <div class="hud-bar-fill fill-hull" id="fill-hull"></div>
+            </div>
+          </div>
+          <div class="hud-bar-container">
+            <span class="hud-bar-label label-overdrive">BOOST</span>
+            <div class="hud-bar-frame">
+              <div class="hud-bar-fill fill-overdrive" id="fill-overdrive"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hud-center">
+          <div class="dimension-badge dim-void" id="dimension-badge">
+            <span class="shard-icon"></span>
+            <span id="dimension-text">DEEP VOID</span>
+          </div>
+          <div class="hud-sector-progress">
+            <div class="hud-progress-fill" id="sector-progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="hud-right">
+          <div class="score-display" id="hud-score">0</div>
+          <div class="multiplier-pill" id="hud-multiplier" style="display: none;">x1.0</div>
+          <div class="shards-counter">
+            <span class="shard-icon"></span>
+            <span id="hud-shards">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom HUD -->
+      <div class="hud-bottom">
+        <div class="speedometer">
+          <span class="speed-value" id="hud-speed">0</span>
+          <span class="speed-unit">KM/S</span>
+        </div>
+
+        <div class="ability-panel">
+          <div class="ability-slot">
+            <div class="ability-icon-box ready" id="box-shift">
+              <span>SHIFT</span>
+              <div class="ability-cooldown-overlay" id="shift-cooldown-overlay"></div>
+            </div>
+            <span class="ability-key">SPACE</span>
+          </div>
+          <div class="ability-slot">
+            <div class="ability-icon-box ready" id="box-emp">
+              <span id="hud-emp-count">2</span>
+            </div>
+            <span class="ability-key">K / EMP</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- On-Screen Touch Controls (Mobile/Tablet) -->
+    <div id="touch-controls">
+      <div class="touch-stick-area" id="touch-stick-area">
+        <div class="touch-stick-knob" id="touch-stick-knob"></div>
+      </div>
+      <div class="touch-actions">
+        <button class="touch-btn btn-touch-shift" id="btn-touch-shift">SHIFT</button>
+        <button class="touch-btn" id="btn-touch-fire">FIRE</button>
+        <button class="touch-btn btn-touch-emp" id="btn-touch-emp">EMP</button>
+      </div>
+    </div>
+
+    <!-- 1. Main Menu Screen -->
+    <div class="ui-screen active" id="main-menu">
+      <div class="menu-panel">
+        <div class="game-title-wrap">
+          <div class="title-sub">CYBERNETIC SPEED RUNNER</div>
+          <h1 class="title-main">SHIFT: COSMIC RUN</h1>
+          <div class="title-tagline">Phase Reality • Outrun Singularity • Obliterate Sentinels</div>
+        </div>
+
+        <div class="menu-buttons">
+          <button class="cyber-btn" id="btn-play-campaign"><span>SECTOR CAMPAIGN</span></button>
+          <button class="cyber-btn btn-magenta" id="btn-play-endless"><span>ENDLESS WARP</span></button>
+          <button class="cyber-btn" id="btn-hangar"><span>SHIP HANGAR</span></button>
+          <button class="cyber-btn" id="btn-upgrades"><span>TECH UPGRADES</span></button>
+          <button class="cyber-btn btn-amber" id="btn-howtoplay"><span>HOW TO PLAY</span></button>
+          <button class="cyber-btn" id="btn-settings"><span>SETTINGS</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Sector Campaign Selection Screen -->
+    <div class="ui-screen" id="screen-sectors">
+      <div class="menu-panel" style="max-width: 650px;">
+        <div class="modal-header">
+          <h2 class="modal-title">SECTOR CAMPAIGN</h2>
+          <button class="btn-close btn-close-modal">✕</button>
+        </div>
+        <div class="sectors-list" id="sectors-container"></div>
+      </div>
+    </div>
+
+    <!-- 3. Ship Hangar Screen -->
+    <div class="ui-screen" id="screen-hangar">
+      <div class="menu-panel" style="max-width: 650px;">
+        <div class="modal-header">
+          <h2 class="modal-title">STARFIGHTER HANGAR</h2>
+          <button class="btn-close btn-close-modal">✕</button>
+        </div>
+
+        <div class="shards-counter" style="margin-bottom: 10px;">
+          <span>AVAILABLE SHARDS: </span>
+          <span class="shard-icon" style="margin-left: 6px;"></span>
+          <strong id="hangar-shards-count" style="color: var(--cyan-glow); margin-left: 4px;">0</strong>
+        </div>
+
+        <div class="ship-carousel">
+          <button class="cyber-btn" id="btn-ship-prev" style="padding: 10px 16px;"><span>◀</span></button>
+          <div class="ship-preview-box">
+            <div class="ship-canvas-preview">
+              <canvas id="ship-preview-canvas" width="220" height="140"></canvas>
+            </div>
+            <h3 class="ship-name" id="hangar-ship-name">Apex-7 Ghostblade</h3>
+            <p class="ship-lore" id="hangar-ship-lore">Experimental deep-space superiority fighter.</p>
+
+            <div class="ship-stats">
+              <div class="stat-row">
+                <span>TOP SPEED</span>
+                <div class="stat-bar"><div class="stat-fill" id="stat-speed"></div></div>
+              </div>
+              <div class="stat-row">
+                <span>SHIELD MATRIX</span>
+                <div class="stat-bar"><div class="stat-fill" id="stat-shields"></div></div>
+              </div>
+              <div class="stat-row">
+                <span>HULL ARMOR</span>
+                <div class="stat-bar"><div class="stat-fill" id="stat-hull"></div></div>
+              </div>
+              <div class="stat-row">
+                <span>DRIFT CONTROL</span>
+                <div class="stat-bar"><div class="stat-fill" id="stat-handling"></div></div>
+              </div>
+            </div>
+          </div>
+          <button class="cyber-btn" id="btn-ship-next" style="padding: 10px 16px;"><span>▶</span></button>
+        </div>
+
+        <button class="cyber-btn" id="btn-select-ship" style="width: 100%; margin-top: 14px;"><span>SELECT SHIP</span></button>
+      </div>
+    </div>
+
+    <!-- 4. Tech Upgrades Screen -->
+    <div class="ui-screen" id="screen-upgrades">
+      <div class="menu-panel" style="max-width: 650px;">
+        <div class="modal-header">
+          <h2 class="modal-title">TECH UPGRADE LAB</h2>
+          <button class="btn-close btn-close-modal">✕</button>
+        </div>
+
+        <div class="shards-counter" style="margin-bottom: 10px;">
+          <span>AVAILABLE SHARDS: </span>
+          <span class="shard-icon" style="margin-left: 6px;"></span>
+          <strong id="upgrades-shards-count" style="color: var(--cyan-glow); margin-left: 4px;">0</strong>
+        </div>
+
+        <div class="upgrades-grid" id="upgrades-container"></div>
+      </div>
+    </div>
+
+    <!-- 5. How To Play Screen -->
+    <div class="ui-screen" id="screen-howtoplay">
+      <div class="menu-panel" style="max-width: 650px;">
+        <div class="modal-header">
+          <h2 class="modal-title">HOW TO PLAY</h2>
+          <button class="btn-close btn-close-modal">✕</button>
+        </div>
+        <div style="font-size: 14px; line-height: 1.6; color: #cbd5e1; display: flex; flex-direction: column; gap: 12px; max-height: 380px; overflow-y: auto;">
+          <p><strong style="color: var(--cyan-glow);">THE REALITY SHIFT:</strong> Press <kbd style="background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 3px;">SPACEBAR</kbd> or tap <kbd>SHIFT</kbd> to phase instantly between <strong>Deep Void</strong> and <strong>Singularity Rift</strong>.</p>
+          <p><strong style="color: var(--cyan-glow);">DIMENSIONAL PHASING:</strong> Obstacles in the alternate dimension appear as faint holograms. You phase straight through them without taking collision damage!</p>
+          <p><strong style="color: var(--magenta-glow);">DIMENSION TRAITS:</strong></p>
+          <ul style="padding-left: 20px;">
+            <li><strong>Deep Void (Cyan):</strong> High-traction flight, laser fence barricades, high speed multiplier.</li>
+            <li><strong>Singularity Rift (Magenta):</strong> Zero-G drift inertia, tumbling asteroids, station debris, gravity wells.</li>
+          </ul>
+          <p><strong style="color: var(--red-sentinel);">HOSTILE SENTINELS:</strong> Hostile UFO saucers flank the corridor with red-orange rim lighting. Shoot them with twin plasma blasters (<kbd>J</kbd> / <kbd>Left-Click</kbd>) or detonate an EMP (<kbd>K</kbd> / <kbd>Right-Click</kbd>).</p>
+          <p><strong style="color: var(--amber-glow);">OVERDRIVE BOOST:</strong> Chain dodges and collect crystals to charge your Overdrive meter. When full, press <kbd>W</kbd> or <kbd>Shift</kbd> to enter invulnerable Relativistic Warp Speed!</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. Settings Screen -->
+    <div class="ui-screen" id="screen-settings">
+      <div class="menu-panel" style="max-width: 500px;">
+        <div class="modal-header">
+          <h2 class="modal-title">SYSTEM SETTINGS</h2>
+          <button class="btn-close btn-close-modal">✕</button>
+        </div>
+        <div class="settings-list">
+          <div class="setting-row">
+            <span>SYNTHWAVE MUSIC VOLUME</span>
+            <input type="range" id="setting-music" min="0" max="1" step="0.05" value="0.6">
+          </div>
+          <div class="setting-row">
+            <span>SOUND FX VOLUME</span>
+            <input type="range" id="setting-sfx" min="0" max="1" step="0.05" value="0.8">
+          </div>
+        </div>
+        <button class="cyber-btn btn-close-modal" style="width: 100%; margin-top: 14px;"><span>SAVE & EXIT</span></button>
+      </div>
+    </div>
+
+    <!-- 7. Pause Screen -->
+    <div class="ui-screen" id="screen-pause">
+      <div class="menu-panel" style="max-width: 420px;">
+        <h2 class="modal-title" style="margin-bottom: 20px;">SYSTEM PAUSED</h2>
+        <div class="menu-buttons">
+          <button class="cyber-btn" id="btn-resume"><span>RESUME FLIGHT</span></button>
+          <button class="cyber-btn btn-amber" id="btn-pause-restart"><span>RESTART SECTOR</span></button>
+          <button class="cyber-btn btn-magenta" id="btn-pause-menu"><span>MAIN MENU</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. Game Over Screen -->
+    <div class="ui-screen" id="screen-gameover">
+      <div class="menu-panel" style="max-width: 480px;">
+        <h2 class="gameover-title">VESSEL DESTROYED</h2>
+        <div class="stats-summary">
+          <div class="stats-row">
+            <span>FINAL SCORE</span>
+            <span class="stats-value" id="go-score">0</span>
+          </div>
+          <div class="stats-row">
+            <span>WARP DISTANCE</span>
+            <span class="stats-value" id="go-distance">0 m</span>
+          </div>
+          <div class="stats-row">
+            <span>SHARDS SALVAGED</span>
+            <span class="stats-value" style="color: var(--cyan-glow);" id="go-shards">+0</span>
+          </div>
+          <div class="stats-row" style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px;">
+            <span>ALL-TIME BEST</span>
+            <span class="stats-value" style="color: var(--amber-glow);" id="go-highscore">0</span>
+          </div>
+        </div>
+        <div class="menu-buttons">
+          <button class="cyber-btn" id="btn-gameover-retry"><span>RETRY RUN</span></button>
+          <button class="cyber-btn btn-magenta" id="btn-gameover-menu"><span>HANGAR / MENU</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. Sector Victory Screen -->
+    <div class="ui-screen" id="screen-victory">
+      <div class="menu-panel" style="max-width: 480px;">
+        <h2 class="victory-title">SECTOR CLEARED!</h2>
+        <h3 id="vic-sector-name" style="color: #94a3b8; font-size: 15px; margin-bottom: 12px;"></h3>
+        <div class="stats-summary">
+          <div class="stats-row">
+            <span>MISSION SCORE</span>
+            <span class="stats-value" id="vic-score">0</span>
+          </div>
+          <div class="stats-row">
+            <span>SECTOR REWARD</span>
+            <span class="stats-value" style="color: var(--amber-glow);" id="vic-reward">+0 ✦</span>
+          </div>
+        </div>
+        <div class="menu-buttons">
+          <button class="cyber-btn" id="btn-victory-next"><span>NEXT SECTOR ❯</span></button>
+          <button class="cyber-btn btn-magenta" id="btn-victory-menu"><span>HANGAR / MENU</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Engine Module Scripts -->
+  <script src="js/audio.js"></script>
+  <script src="js/systems/storage.js"></script>
+  <script src="js/systems/dimensions.js"></script>
+  <script src="js/systems/spawner.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/entities/particles.js"></script>
+  <script src="js/entities/player.js"></script>
+  <script src="js/entities/obstacles.js"></script>
+  <script src="js/entities/enemies.js"></script>
+  <script src="js/entities/pickups.js"></script>
+  <script src="js/renderer.js"></script>
+  <script src="js/ui/hud.js"></script>
+  <script src="js/ui/menus.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
